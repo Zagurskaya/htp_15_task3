@@ -21,6 +21,8 @@ public class Ferryboat {
     private AtomicInteger occupiedCapacityInFerryboat = new AtomicInteger();
     private static AtomicBoolean isCreated = new AtomicBoolean(false);
     private static Lock lock = new ReentrantLock();
+    private static Lock lock1 = new ReentrantLock();
+    private static Lock lock2 = new ReentrantLock();
 
     private static Queue<Car> usedPlaces;
 
@@ -43,30 +45,6 @@ public class Ferryboat {
         return instance;
     }
 
-    public static int getArea() {
-        return AREA;
-    }
-
-    public AtomicInteger getOccupiedAreaInFerryboat() {
-        return occupiedAreaInFerryboat;
-    }
-
-    public void setOccupiedAreaInFerryboat(AtomicInteger occupiedAreaInFerryboat) {
-        this.occupiedAreaInFerryboat = occupiedAreaInFerryboat;
-    }
-
-    public static int getCarryingCapacity() {
-        return CARRYING_CAPACITY;
-    }
-
-    public AtomicInteger getOccupiedCapacityInFerryboat() {
-        return occupiedCapacityInFerryboat;
-    }
-
-    public void setOccupiedCapacityInFerryboat(AtomicInteger occupiedCapacityInFerryboat) {
-        this.occupiedCapacityInFerryboat = occupiedCapacityInFerryboat;
-    }
-
     public boolean isAddAuto(Car car) {
         return !isFull()
                 && (AREA - occupiedAreaInFerryboat.get() >= car.getArea())
@@ -83,7 +61,7 @@ public class Ferryboat {
 
     public void unload() {
         try {
-            lock.lock();
+            lock1.lock();
             while (!isEmpty()) {
                 Car newCar = usedPlaces.poll();
                 for (int i = 0; i < newCar.getArea(); i++) {
@@ -100,13 +78,13 @@ public class Ferryboat {
             }
 
         } finally {
-            lock.unlock();
+            lock1.unlock();
         }
     }
 
     public void download(Car car) {
         try {
-            lock.lock();
+            lock2.lock();
             boolean isNotFull = isAddAuto(car);
             if (isNotFull) {
                 usedPlaces.offer(car);
@@ -119,7 +97,7 @@ public class Ferryboat {
                 logger.log(Level.INFO, "Ferryboat is full.");
             }
         } finally {
-            lock.unlock();
+            lock2.unlock();
         }
     }
 
