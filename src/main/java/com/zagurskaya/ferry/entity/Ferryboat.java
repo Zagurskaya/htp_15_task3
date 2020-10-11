@@ -20,7 +20,6 @@ public class Ferryboat {
     private AtomicInteger occupiedCapacityInFerryboat = new AtomicInteger();
     private static AtomicBoolean isCreated = new AtomicBoolean(false);
     private static Lock lock = new ReentrantLock();
-
     private static PriorityQueue<Car> usedPlaces;
 
     private Ferryboat() {
@@ -46,6 +45,7 @@ public class Ferryboat {
         return (MAX_AREA - occupiedAreaInFerryboat.get() >= car.getArea())
                 && (MAX_CARRYING_CAPACITY - occupiedCapacityInFerryboat.get() >= car.getCapacity());
     }
+
     public boolean isFull(Car car) {
         return (MAX_AREA - occupiedAreaInFerryboat.get() < car.getArea())
                 && (MAX_CARRYING_CAPACITY - occupiedCapacityInFerryboat.get() < car.getCapacity());
