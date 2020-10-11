@@ -70,7 +70,7 @@ public class Car implements Callable<Car> ,Comparable<Car> {
         if (area != car.area) return false;
         if (capacity != car.capacity) return false;
         if (name != null ? !name.equals(car.name) : car.name != null) return false;
-        return state != null ? state.equals(car.state) : car.state == null;
+        return state != null ? state.getClass().getSimpleName().equals(car.state.getClass().getSimpleName()) : car.state == null;
 
     }
 
@@ -82,7 +82,6 @@ public class Car implements Callable<Car> ,Comparable<Car> {
         result = 31 * result + (state != null ? state.hashCode() : 0);
         return result;
     }
-
 
     @Override
     public String toString() {

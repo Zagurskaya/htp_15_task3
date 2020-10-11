@@ -1,6 +1,8 @@
 package com.zagurskaya.ferry.main;
 
-
+import com.zagurskaya.ferry.creator.CarCreator;
+import com.zagurskaya.ferry.entity.Car;
+import com.zagurskaya.ferry.reader.DataReader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,34 +16,35 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
-    private static Logger logger = LogManager.getLogger();
-
     public static void main(String[] args) {
+        final Logger logger = LogManager.getLogger(DataReader.class);
 
-//        ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-//        List<Ship> ships = new ArrayList<>();
-//        List<Future<Ship>> result = new ArrayList<>();
-//
+        ExecutorService es = Executors.newFixedThreadPool(4);
+        List<Car> cars = new ArrayList<>();
+        List<Future<Car>> result = new ArrayList<>();
+        DataReader dataReader = new DataReader();
+        CarCreator carCreator = new CarCreator();
 
-//        try {
-//            List<String> shipsData = DataReader.getInstance().readFile("input/ships.txt");
-//            ships = DataParser.getInstance().parseShips(shipsData);
-//            ships.forEach(ship -> logger.log(Level.INFO, ship));
-//        } catch (ProjectException e) {
-//            logger.log(Level.ERROR, "Error in time of reading file. ", e);
-//        }
-//        for (Ship ship : ships) {
-//            result.add(es.submit(ship));
-//        }
-//
-//        for (Future<Ship> ship : result) {
-//            try {
-//                TimeUnit.MILLISECONDS.sleep(200);
-//                logger.log(Level.INFO, ship.get());
-//            } catch (InterruptedException | ExecutionException e) {
-//                logger.log(Level.WARN, "Error. ", e);
-//            }
-//        }
-//        es.shutdown();
+        List<String> rowCarList = dataReader.read("data/data.txt");
+        rowCarList.stream().forEach(s -> {
+            Car car = carCreator.create(s);
+            if (car != null) {
+                cars.add(car);
+            }
+        });
+        cars.forEach(ship -> logger.log(Level.INFO, ship));
+
+        for (Car car : cars) {
+            result.add(es.submit(car));
+        }
+        for (Future<Car> car : result) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(200);
+                logger.log(Level.INFO, car.get());
+            } catch (InterruptedException | ExecutionException e) {
+                logger.log(Level.WARN, "Error. ", e);
+            }
+        }
+        es.shutdown();
     }
 }
