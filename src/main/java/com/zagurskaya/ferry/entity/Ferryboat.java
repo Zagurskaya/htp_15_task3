@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -15,16 +14,14 @@ public class Ferryboat {
     private static final Logger logger = LogManager.getLogger();
     private static Ferryboat instance;
 
-    private static final int AREA = 100; // площадь
+    private static final int MAX_AREA = 100; // площадь
     private AtomicInteger occupiedAreaInFerryboat = new AtomicInteger();
-    private static final int CARRYING_CAPACITY = 100; // грузоподъемность
+    private static final int MAX_CARRYING_CAPACITY = 100; // грузоподъемность
     private AtomicInteger occupiedCapacityInFerryboat = new AtomicInteger();
     private static AtomicBoolean isCreated = new AtomicBoolean(false);
     private static Lock lock = new ReentrantLock();
-    private static Lock lock1 = new ReentrantLock();
-    private static Lock lock2 = new ReentrantLock();
 
-    private static Queue<Car> usedPlaces;
+    private static PriorityQueue<Car> usedPlaces;
 
     private Ferryboat() {
     }
@@ -46,22 +43,21 @@ public class Ferryboat {
     }
 
     public boolean isAddAuto(Car car) {
-        return !isFull()
-                && (AREA - occupiedAreaInFerryboat.get() >= car.getArea())
-                && (CARRYING_CAPACITY - occupiedCapacityInFerryboat.get() >= car.getCapacity());
+        return (MAX_AREA - occupiedAreaInFerryboat.get() >= car.getArea())
+                && (MAX_CARRYING_CAPACITY - occupiedCapacityInFerryboat.get() >= car.getCapacity());
     }
-
-    public boolean isFull() {
-        return occupiedAreaInFerryboat.get() == AREA && occupiedCapacityInFerryboat.get() == CARRYING_CAPACITY;
+    public boolean isFull(Car car) {
+        return (MAX_AREA - occupiedAreaInFerryboat.get() < car.getArea())
+                && (MAX_CARRYING_CAPACITY - occupiedCapacityInFerryboat.get() < car.getCapacity());
     }
 
     public boolean isEmpty() {
-        return (occupiedAreaInFerryboat.get() <= 0) && (occupiedCapacityInFerryboat.get() <= 0);
+        return (occupiedAreaInFerryboat.get() == 0) && (occupiedCapacityInFerryboat.get() == 0);
     }
 
     public void unload() {
         try {
-            lock1.lock();
+            lock.lock();
             while (!isEmpty()) {
                 Car newCar = usedPlaces.poll();
                 for (int i = 0; i < newCar.getArea(); i++) {
@@ -74,17 +70,21 @@ public class Ferryboat {
                         newCar, occupiedAreaInFerryboat, occupiedCapacityInFerryboat);
             }
             if (isEmpty()) {
-                logger.log(Level.INFO, "Ferryboat is full.");
+                logger.log(Level.INFO, "Ferryboat is empty.");
             }
 
         } finally {
-            lock1.unlock();
+            lock.unlock();
         }
     }
 
     public void download(Car car) {
         try {
-            lock2.lock();
+            if (isFull(car)) {
+                logger.log(Level.INFO, "Ferryboat is full.");
+            }
+
+            lock.lock();
             boolean isNotFull = isAddAuto(car);
             if (isNotFull) {
                 usedPlaces.offer(car);
@@ -93,11 +93,8 @@ public class Ferryboat {
                 logger.log(Level.INFO, "Added to ferry {}, All_Area - {}, AlldCapacity - {}",
                         car, occupiedAreaInFerryboat, occupiedCapacityInFerryboat);
             }
-            if (!isNotFull) {
-                logger.log(Level.INFO, "Ferryboat is full.");
-            }
         } finally {
-            lock2.unlock();
+            lock.unlock();
         }
     }
 
